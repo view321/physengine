@@ -3,7 +3,7 @@ package components
 import (
 	"physengine/game"
 	"physengine/vector2"
-
+	"physengine/gameobjects"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -11,7 +11,7 @@ type TransformComponent struct {
 	Position   vector2.Vector2
 	Rotation   float64
 	Scale      vector2.Vector2
-	gameObject *game.GameObject
+	gameObject *gameobjects.GameObject
 }
 
 func (*TransformComponent) Update(g *game.Game) error {
@@ -60,7 +60,7 @@ func (t *TransformComponent) RotateBy(n float64) {
 		(*obj.Transform).(*TransformComponent).RotateBy(n)
 	}
 }
-func (t *TransformComponent) Init(g *game.GameObject) {
+func (t *TransformComponent) Init(g *gameobjects.GameObject) {
 	t.gameObject = g
 	if g.Parent == nil {
 		t.Position = vector2.Vector2{X: 0, Y: 0}

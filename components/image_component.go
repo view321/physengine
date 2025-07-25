@@ -4,18 +4,18 @@ import (
 	"image"
 	_ "image/png"
 	"os"
+	"physengine/gameobjects"
 	"physengine/game"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type ImageComponent struct {
 	Img        *ebiten.Image
 	transform  *TransformComponent
-	gameObject *game.GameObject
+	gameObject *gameobjects.GameObject
 }
 
-func (ic *ImageComponent) Init(g *game.GameObject) {
+func (ic *ImageComponent) Init(g *gameobjects.GameObject) {
 	ic.gameObject = g
 	for _, comp := range g.Components {
 		if comp.GetName() == "TransformComponent" {
