@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"math"
 	Vec2 "physengine/helpers/vec2"
 
@@ -12,11 +13,6 @@ type TransformData struct {
 	Rot      float64
 	Scale    Vec2.Vec2
 	Children []*TransformData
-	ID       int
-}
-
-func (p TransformData) Order() int {
-	return -p.ID
 }
 
 var Transform = donburi.NewComponentType[TransformData]()
@@ -38,7 +34,10 @@ func GetWorldScale(transform *TransformData) Vec2.Vec2 {
 
 func SetTransform(entry *donburi.Entry, new_transform TransformData) {
 	old_transform := Transform.Get(entry)
-
+	if old_transform == nil {
+		fmt.Println("Object does not have transform component")
+		return
+	}
 	// Calculate deltas
 	rotation_delta := new_transform.Rot - old_transform.Rot
 	scale_delta_x := new_transform.Scale.X / old_transform.Scale.X
