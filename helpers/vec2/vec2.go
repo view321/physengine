@@ -46,3 +46,6 @@ func Scalar(v1, v2 Vec2) float64 {
 func Add(v1, v2 Vec2) Vec2 {
 	return Vec2{v1.X + v2.X, v1.Y + v2.Y}
 }
+func Distance(v1, v2 Vec2) float64{
+	return math.Sqrt(math.Pow(v1.X-v2.X, 2)+math.Pow(v1.Y-v2.Y, 2))
+}

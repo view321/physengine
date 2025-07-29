@@ -29,9 +29,9 @@ func (ms *MyScene) configure() {
 	ms.ecs.AddSystem(systems.UpdatePlayer)
 	ms.ecs.AddSystem(systems.UpdateCamera)
 	ms.ecs.AddSystem(systems.UpdateDrag)
-	ms.ecs.AddSystem(systems.UpdateEnemy)
+	//ms.ecs.AddSystem(systems.UpdateEnemy)
 	ms.ecs.AddRenderer(0, systems.DrawCamera)
 	factory.CreatePlayer(ms.ecs)
 	factory.CreateCamera(ms.ecs)
-	factory.CreateEnemy(ms.ecs)
+	//factory.CreateEnemy(ms.ecs)
 }
