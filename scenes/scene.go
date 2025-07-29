@@ -33,6 +33,10 @@ func (ms *MyScene) configure() {
 	ms.ecs.AddRenderer(0, systems.DrawCamera)
 	factory.CreateCamera(ms.ecs)
 	factory.CreateCollisionResolver(ms.ecs)
-	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 0, Y: 300}, Vec2.Vec2{X: 0, Y: -50})
-	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 0, Y: -300}, Vec2.Vec2{X: 0, Y: 50})
+	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: 0, Y: 300}, Vec2.Vec2{X: 120, Y: -150})
+	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: 50, Y: -100}, Vec2.Vec2{X: 0, Y: 50})
+	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: -150, Y: -100}, Vec2.Vec2{X: 100, Y: 50})
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 200, Y: 300}, Vec2.Vec2{X: 20, Y: 0})
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 100, Y: -50}, Vec2.Vec2{X: 0, Y: -50})
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: -50, Y: -300}, Vec2.Vec2{X: 0, Y: 100})
 }

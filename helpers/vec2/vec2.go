@@ -22,6 +22,13 @@ func (v *Vec2) Normalize() {
 	v.X = v.X / l
 	v.Y = v.Y / l
 }
+func (v Vec2) Normalized() Vec2 {
+	l := v.Magnitude()
+	if l == 0 {
+		return Vec2{0, 0}
+	}
+	return Vec2{v.X / l, v.Y / l}
+}
 func (v Vec2) Mult(nm float64) Vec2 {
 	return Vec2{v.X * nm, v.Y * nm}
 }
