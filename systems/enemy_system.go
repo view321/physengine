@@ -17,39 +17,39 @@ func UpdateEnemy(ecs *ecs.ECS) {
 
 		if tr.Pos.X > 1000 {
 			tr.Pos.X = 1000
-			v.X *= -1
-			v.X = v.X + (rand.Float64()-0.5)*10
-			v.Y = v.Y + (rand.Float64()-0.5)*10
-			magn := math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
-			v.X = v.X / magn * 25
-			v.Y = v.Y / magn * 25
+			v.Velocity.X *= -1
+			v.Velocity.X = v.Velocity.X + (rand.Float64()-0.5)*10
+			v.Velocity.Y = v.Velocity.Y + (rand.Float64()-0.5)*10
+			magn := math.Sqrt(math.Pow(v.Velocity.X, 2) + math.Pow(v.Velocity.Y, 2))
+			v.Velocity.X = v.Velocity.X / magn * 25
+			v.Velocity.Y = v.Velocity.Y / magn * 25
 		}
 		if tr.Pos.X < -1000 {
 			tr.Pos.X = -1000
-			v.X *= -1
-			v.X = v.X + (rand.Float64()-0.5)*10
-			v.Y = v.Y + (rand.Float64()-0.5)*10
-			magn := math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
-			v.X = v.X / magn * 25
-			v.Y = v.Y / magn * 25
+			v.Velocity.X *= -1
+			v.Velocity.X = v.Velocity.X + (rand.Float64()-0.5)*10
+			v.Velocity.Y = v.Velocity.Y + (rand.Float64()-0.5)*10
+			magn := math.Sqrt(math.Pow(v.Velocity.X, 2) + math.Pow(v.Velocity.Y, 2))
+			v.Velocity.X = v.Velocity.X / magn * 25
+			v.Velocity.Y = v.Velocity.Y / magn * 25
 		}
 		if tr.Pos.Y > 1000 {
 			tr.Pos.Y = 1000
-			v.Y *= -1
-			v.X = v.X + (rand.Float64()-0.5)*10
-			v.Y = v.Y + (rand.Float64()-0.5)*10
-			magn := math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
-			v.X = v.X / magn * 25
-			v.Y = v.Y / magn * 25
+			v.Velocity.Y *= -1
+			v.Velocity.X = v.Velocity.X + (rand.Float64()-0.5)*10
+			v.Velocity.Y = v.Velocity.Y + (rand.Float64()-0.5)*10
+			magn := math.Sqrt(math.Pow(v.Velocity.X, 2) + math.Pow(v.Velocity.Y, 2))
+			v.Velocity.X = v.Velocity.X / magn * 25
+			v.Velocity.Y = v.Velocity.Y / magn * 25
 		}
 		if tr.Pos.Y < -1000 {
 			tr.Pos.Y = -1000
-			v.Y *= -1
-			v.X = v.X + (rand.Float64()-0.5)*10
-			v.Y = v.Y + (rand.Float64()-0.5)*10
-			magn := math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
-			v.X = v.X / magn * 25
-			v.Y = v.Y / magn * 25
+			v.Velocity.Y *= -1
+			v.Velocity.X = v.Velocity.X + (rand.Float64()-0.5)*10
+			v.Velocity.Y = v.Velocity.Y + (rand.Float64()-0.5)*10
+			magn := math.Sqrt(math.Pow(v.Velocity.X, 2) + math.Pow(v.Velocity.Y, 2))
+			v.Velocity.X = v.Velocity.X / magn * 25
+			v.Velocity.Y = v.Velocity.Y / magn * 25
 		}
 
 		player, _ := components.Player.First(ecs.World)
@@ -58,6 +58,6 @@ func UpdateEnemy(ecs *ecs.ECS) {
 			fmt.Println("Game Over")
 		}
 
-		components.SetPos(entry, tr.Pos.Add(Vec2.Vec2{X: v.X, Y: v.Y}))
+		components.SetPos(entry, tr.Pos.Add(Vec2.Vec2{X: v.Velocity.X, Y: v.Velocity.Y}))
 	}
 }

@@ -14,11 +14,11 @@ func CreateEnemy(ecs *ecs.ECS) {
 	ecs.World.CreateMany(5, components.Transform, components.BulletTag, components.Velocity, components.CircleCollider, components.Drawable)
 
 	for entry := range components.BulletTag.Iter(ecs.World) {
-		donburi.SetValue(entry, components.Velocity, components.VelocityData{X: (rand.Float64() - 0.5) * 10, Y: (rand.Float64() - 0.5) * 10})
+		donburi.SetValue(entry, components.Velocity, components.VelocityData{Velocity: Vec2.Vec2{X: (rand.Float64() - 0.5) * 10, Y: (rand.Float64() - 0.5) * 10}})
 		tr := donburi.Get[components.TransformData](entry, components.Transform)
 		velocity := components.Velocity.Get(entry)
-		velocity.X = (rand.Float64() - 0.5) * 100
-		velocity.Y = (rand.Float64() - 0.5) * 100
+		velocity.Velocity.X = (rand.Float64() - 0.5) * 100
+		velocity.Velocity.Y = (rand.Float64() - 0.5) * 100
 		tr.Pos.X = (rand.Float64() - 0.5) * 10
 		tr.Pos.Y = (rand.Float64() - 0.5) * 10
 		tr.Scale = Vec2.Vec2{X: 1, Y: 1}

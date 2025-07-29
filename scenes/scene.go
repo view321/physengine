@@ -2,6 +2,7 @@ package scenes
 
 import (
 	"physengine/factory"
+	Vec2 "physengine/helpers/vec2"
 	"physengine/systems"
 	"sync"
 
@@ -26,12 +27,12 @@ func (ms *MyScene) Draw(screen *ebiten.Image) {
 
 func (ms *MyScene) configure() {
 	ms.ecs = ecs.NewECS(donburi.NewWorld())
-	ms.ecs.AddSystem(systems.UpdatePlayer)
 	ms.ecs.AddSystem(systems.UpdateCamera)
-	ms.ecs.AddSystem(systems.UpdateDrag)
-	//ms.ecs.AddSystem(systems.UpdateEnemy)
+	ms.ecs.AddSystem(systems.UpdateCollisions)
+	ms.ecs.AddSystem(systems.UpdateVelocity)
 	ms.ecs.AddRenderer(0, systems.DrawCamera)
-	factory.CreatePlayer(ms.ecs)
 	factory.CreateCamera(ms.ecs)
-	//factory.CreateEnemy(ms.ecs)
+	factory.CreateCollisionResolver(ms.ecs)
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 0, Y: 300}, Vec2.Vec2{X: 0, Y: -50})
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 0, Y: -300}, Vec2.Vec2{X: 0, Y: 50})
 }

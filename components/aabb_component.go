@@ -7,9 +7,9 @@ import (
 )
 
 type AABB_Data struct {
-	Min Vec2.Vec2
-	Max Vec2.Vec2
-	
+	Min         Vec2.Vec2
+	Max         Vec2.Vec2
+	Restitution float64
 }
 
 var AABB_Component = donburi.NewComponentType[AABB_Data]()

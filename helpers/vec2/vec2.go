@@ -7,10 +7,6 @@ type Vec2 struct {
 	Y float64
 }
 
-func (v *Vec2) init(x, y float64) {
-	v.X = x
-	v.Y = y
-}
 func (v *Vec2) Invert() {
 	v.X *= -1
 	v.Y *= -1
@@ -40,12 +36,12 @@ func (v1 *Vec2) AddUpdate(v2 Vec2) {
 	v1.X += v2.X
 	v1.Y += v2.Y
 }
-func Scalar(v1, v2 Vec2) float64 {
+func DotProduct(v1, v2 Vec2) float64 {
 	return float64(v1.X*v2.X + v1.Y*v2.Y)
 }
 func Add(v1, v2 Vec2) Vec2 {
 	return Vec2{v1.X + v2.X, v1.Y + v2.Y}
 }
-func Distance(v1, v2 Vec2) float64{
-	return math.Sqrt(math.Pow(v1.X-v2.X, 2)+math.Pow(v1.Y-v2.Y, 2))
+func Distance(v1, v2 Vec2) float64 {
+	return math.Sqrt(math.Pow(v1.X-v2.X, 2) + math.Pow(v1.Y-v2.Y, 2))
 }
