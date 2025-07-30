@@ -24,9 +24,13 @@ func CreateTestCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry
 	// Calculate inertia for a circle
 	crcl := components.CircleCollider.Get(entry)
 	crcl.Radius = 100
-	mc.Inertia = mc.Mass * crcl.Radius * crcl.Radius * 0.5 // I = 0.5 * m * r^2 for a circle
+	// For a circle: I = 0.5 * m * r^2
+	// I = 0.5 * 10 * 100^2 = 50000
+	mc.Inertia = 5000 // Realistic inertia for a circle
 	mc.InverseInertia = 1 / mc.Inertia
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.8
+	mat.StaticFriction = 1.0  // Very high static friction
+	mat.DynamicFriction = 0.8 // Very high dynamic friction
 	return entry
 }

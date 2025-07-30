@@ -35,13 +35,13 @@ func CreateTestTriangle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Ent
 	mc.Mass = 8
 	mc.InverseMass = 1 / mc.Mass
 	// Calculate inertia for a triangle (approximate)
-	mc.Inertia = mc.Mass * 8000
+	mc.Inertia = 5000
 	mc.InverseInertia = 1 / mc.Inertia
 
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.7
-	mat.StaticFriction = 0.3
-	mat.DynamicFriction = 0.2
+	mat.StaticFriction = 0.5
+	mat.DynamicFriction = 0.5
 
 	return entry
 }
@@ -68,7 +68,7 @@ func CreateTestPentagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Ent
 	mc.Mass = 12
 	mc.InverseMass = 1 / mc.Mass
 	// Calculate inertia for a pentagon (approximate)
-	mc.Inertia = mc.Mass * 12000
+	mc.Inertia = 2500
 	mc.InverseInertia = 1 / mc.Inertia
 
 	mat := components.MaterialComponent.Get(entry)
@@ -101,7 +101,7 @@ func CreateTestHexagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entr
 	mc.Mass = 10
 	mc.InverseMass = 1 / mc.Mass
 	// Calculate inertia for a hexagon (approximate)
-	mc.Inertia = mc.Mass * 10000
+	mc.Inertia = 50000
 	mc.InverseInertia = 1 / mc.Inertia
 
 	mat := components.MaterialComponent.Get(entry)
@@ -134,7 +134,7 @@ func CreateTestRectangle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, width, heig
 	mc.Mass = 15
 	mc.InverseMass = 1 / mc.Mass
 	// Calculate inertia for a rectangle (approximate)
-	mc.Inertia = mc.Mass * 15000
+	mc.Inertia = 50000
 	mc.InverseInertia = 1 / mc.Inertia
 
 	mat := components.MaterialComponent.Get(entry)

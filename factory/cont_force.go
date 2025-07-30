@@ -14,7 +14,7 @@ func CreateConstForces(e *ecs.ECS) {
 	entry := e.World.Entry(entity)
 	comp := components.ContForceComp.Get(entry)
 	gravity := components.ContForceContainer{}
-	gravity.Force = Vec2.Vec2{X: 0, Y: -1000}
+	gravity.Force = Vec2.Vec2{X: 0, Y: -10000}
 	query := donburi.NewQuery(filter.Contains(components.GravityTag))
 	for entry := range query.Iter(e.World) {
 		gravity.Objects = append(gravity.Objects, entry)

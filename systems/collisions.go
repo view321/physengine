@@ -438,9 +438,6 @@ func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, collisionPoint Vec
 
 	// Calculate tangent vector with  stability
 	tangent := relativeVel.Add(normal.Mult(-1 * Vec2.DotProduct(relativeVel, normal)))
-	if tangent.Magnitude() < 0.001 {
-		return
-	}
 	tangent.Normalize()
 
 	// Calculate tangential impulse
@@ -458,18 +455,79 @@ func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, collisionPoint Vec
 		denominator += cross2 * cross2 * m2.InverseInertia
 	}
 
-	if denominator > 0.001 {
-		jt /= denominator
-
-		// Apply friction limits with  stability
-		mu := math.Sqrt(mat1.StaticFriction*mat1.StaticFriction + mat2.StaticFriction*mat2.StaticFriction)
+	// Handle infinite mass objects (InverseMass = 0)
+	// If one object has infinite mass, only apply friction to the other object
+	if m1.InverseMass == 0 && m2.InverseMass > 0 {
+		// Only apply friction to object 2
 		var frictionImpulse Vec2.Vec2
 
-		if math.Abs(jt) < j*mu {
+		// Use relative velocity magnitude instead of j for friction decision
+		relativeVelMagnitude := relativeVel.Magnitude()
+		if relativeVelMagnitude < 0.1 { // Static friction threshold
 			frictionImpulse = tangent.Mult(jt)
 		} else {
 			dynamicFriction := math.Sqrt(mat1.DynamicFriction*mat1.DynamicFriction + mat2.DynamicFriction*mat2.DynamicFriction)
-			frictionImpulse = tangent.Mult(-j * dynamicFriction)
+			frictionImpulse = tangent.Mult(-relativeVelMagnitude * dynamicFriction)
+		}
+
+		// Clamp friction impulse
+		maxFrictionImpulse := 500.0
+		if frictionImpulse.Magnitude() > maxFrictionImpulse {
+			frictionImpulse.Normalize()
+			frictionImpulse = frictionImpulse.Mult(maxFrictionImpulse)
+		}
+
+		// Apply linear friction impulse only to object 2
+		vel2.Velocity.AddUpdate(frictionImpulse.Mult(m2.InverseMass))
+
+		// Apply angular friction impulse only to object 2
+		if angVel2 != nil && m2.InverseInertia > 0 {
+			cross2 := r2.X*frictionImpulse.Y - r2.Y*frictionImpulse.X
+			angVel2.AngularVelocity += cross2 * m2.InverseInertia
+		}
+		return
+	} else if m2.InverseMass == 0 && m1.InverseMass > 0 {
+		// Only apply friction to object 1
+		var frictionImpulse Vec2.Vec2
+
+		// Use relative velocity magnitude instead of j for friction decision
+		relativeVelMagnitude := relativeVel.Magnitude()
+		if relativeVelMagnitude < 0.1 { // Static friction threshold
+			frictionImpulse = tangent.Mult(jt)
+		} else {
+			dynamicFriction := math.Sqrt(mat1.DynamicFriction*mat1.DynamicFriction + mat2.DynamicFriction*mat2.DynamicFriction)
+			frictionImpulse = tangent.Mult(-relativeVelMagnitude * dynamicFriction)
+		}
+
+		// Clamp friction impulse
+		maxFrictionImpulse := 500.0
+		if frictionImpulse.Magnitude() > maxFrictionImpulse {
+			frictionImpulse.Normalize()
+			frictionImpulse = frictionImpulse.Mult(maxFrictionImpulse)
+		}
+
+		// Apply linear friction impulse only to object 1
+		vel1.Velocity.AddUpdate(frictionImpulse.Mult(-m1.InverseMass))
+
+		// Apply angular friction impulse only to object 1
+		if angVel1 != nil && m1.InverseInertia > 0 {
+			cross1 := r1.X*frictionImpulse.Y - r1.Y*frictionImpulse.X
+			angVel1.AngularVelocity -= cross1 * m1.InverseInertia
+		}
+		return
+	} else if denominator > 0.001 {
+		jt /= denominator
+
+		// Apply friction limits with  stability
+		var frictionImpulse Vec2.Vec2
+
+		// Use relative velocity magnitude instead of j for friction decision
+		relativeVelMagnitude := relativeVel.Magnitude()
+		if relativeVelMagnitude < 0.1 { // Static friction threshold
+			frictionImpulse = tangent.Mult(jt)
+		} else {
+			dynamicFriction := math.Sqrt(mat1.DynamicFriction*mat1.DynamicFriction + mat2.DynamicFriction*mat2.DynamicFriction)
+			frictionImpulse = tangent.Mult(-relativeVelMagnitude * dynamicFriction)
 		}
 
 		// Clamp friction impulse
@@ -497,7 +555,7 @@ func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, collisionPoint Vec
 
 // PositionalCorrection prevents objects from pulling towards each other
 func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth, percent float64) {
-	if penetration_depth < 0.01 { // Increased threshold for better stability
+	if penetration_depth < 0.1 { // Increased threshold for better stability
 		return
 	}
 	m1 := components.MassComponent.Get(e1)
@@ -510,7 +568,21 @@ func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth,
 
 	// Calculate correction with  stability
 	totalInverseMass := m1.InverseMass + m2.InverseMass
-	if totalInverseMass < 0.001 {
+
+	// Handle infinite mass objects (InverseMass = 0)
+	// If one object has infinite mass, only move the other object
+	if m1.InverseMass == 0 && m2.InverseMass > 0 {
+		// Only move object 2
+		correction := n.Mult(percent * penetration_depth)
+		components.ChangePos(e2, correction)
+		return
+	} else if m2.InverseMass == 0 && m1.InverseMass > 0 {
+		// Only move object 1
+		correction := n.Mult(percent * penetration_depth)
+		components.ChangePos(e1, correction.Mult(-1))
+		return
+	} else if totalInverseMass < 0.001 {
+		// Both objects have infinite mass or very small inverse mass
 		return
 	}
 

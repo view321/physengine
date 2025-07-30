@@ -79,8 +79,8 @@ func DrawCamera(e *ecs.ECS, screen_camera *ebiten.Image) {
 		aabb := components.AABB_Component.Get(entry)
 		obj_tr := components.Transform.Get(entry)
 
-		// AABB bounds are in world coordinates relative to object position
-		// Calculate the four corners of the AABB in world space
+		// The collision detection treats AABB bounds as offsets added to object position
+		// Calculate the four corners in world space (exactly matching collision detection)
 		worldCorners := []Vec2.Vec2{
 			{X: obj_tr.Pos.X + aabb.Min.X, Y: obj_tr.Pos.Y + aabb.Min.Y}, // bottom-left
 			{X: obj_tr.Pos.X + aabb.Max.X, Y: obj_tr.Pos.Y + aabb.Min.Y}, // bottom-right
