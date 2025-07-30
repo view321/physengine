@@ -78,8 +78,8 @@ func CreatePolygonDemoBox(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.E
 	mc.InverseInertia = 1 / mc.Inertia
 
 	box := components.AABB_Component.Get(entry)
-	box.Min = Vec2.Vec2{-50, -40}
-	box.Max = Vec2.Vec2{50, 40}
+	box.Min = Vec2.Vec2{X: -50, Y: -40}
+	box.Max = Vec2.Vec2{X: 50, Y: 40}
 
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.7

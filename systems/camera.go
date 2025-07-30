@@ -84,11 +84,11 @@ func DrawCamera(e *ecs.ECS, screen_camera *ebiten.Image) {
 		world_y := obj_tr.Pos.Y - camera_tr.Pos.Y
 
 		// Create AABB corner points in world coordinates relative to object center
-		center := Vec2.Vec2{world_x, world_y}
-		p1 := Vec2.Vec2{center.X + aabb.Min.X, center.Y + aabb.Min.Y}
-		p2 := Vec2.Vec2{center.X + aabb.Max.X, center.Y + aabb.Max.Y}
-		p3 := Vec2.Vec2{center.X + aabb.Min.X, center.Y + aabb.Max.Y}
-		p4 := Vec2.Vec2{center.X + aabb.Max.X, center.Y + aabb.Min.Y}
+		center := Vec2.Vec2{X: world_x, Y: world_y}
+		p1 := Vec2.Vec2{X: center.X + aabb.Min.X, Y: center.Y + aabb.Min.Y}
+		p2 := Vec2.Vec2{X: center.X + aabb.Max.X, Y: center.Y + aabb.Max.Y}
+		p3 := Vec2.Vec2{X: center.X + aabb.Min.X, Y: center.Y + aabb.Max.Y}
+		p4 := Vec2.Vec2{X: center.X + aabb.Max.X, Y: center.Y + aabb.Min.Y}
 
 		// Apply rotation around object center
 		ApplyRotToPointAroundCenter(&p1, center, obj_tr.Rot)
@@ -131,6 +131,69 @@ func DrawCamera(e *ecs.ECS, screen_camera *ebiten.Image) {
 		scaled_radius := crcl.Radius * radius_scale
 
 		vector.StrokeCircle(screen_camera, float32(screen_x), float32(screen_y), float32(scaled_radius), 2, color.White, false)
+	}
+
+	// Draw polygon wireframes
+	query4 := donburi.NewQuery(filter.Contains(components.PolygonCollider))
+	for entry := range query4.Iter(e.World) {
+		// Get world vertices (already transformed with rotation and position)
+		worldVertices := components.GetWorldVertices(entry)
+		if worldVertices == nil || len(worldVertices) < 3 {
+			continue
+		}
+
+		// Convert vertices to screen coordinates
+		screenVertices := make([]Vec2.Vec2, len(worldVertices))
+		for i, vertex := range worldVertices {
+			// Calculate world position relative to camera
+			world_x := vertex.X - camera_tr.Pos.X
+			world_y := vertex.Y - camera_tr.Pos.Y
+
+			// Convert world coordinates to screen coordinates
+			// Invert Y axis so it points up
+			screen_x := world_x*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+			screen_y := -world_y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+
+			screenVertices[i] = Vec2.Vec2{X: screen_x, Y: screen_y}
+		}
+
+		// Choose color based on polygon type
+		var wireframeColor color.Color
+		switch len(worldVertices) {
+		case 3:
+			wireframeColor = color.RGBA{255, 0, 0, 255} // Red for triangles
+		case 4:
+			wireframeColor = color.RGBA{0, 255, 0, 255} // Green for rectangles
+		case 5:
+			wireframeColor = color.RGBA{0, 0, 255, 255} // Blue for pentagons
+		case 6:
+			wireframeColor = color.RGBA{255, 255, 0, 255} // Yellow for hexagons
+		default:
+			wireframeColor = color.RGBA{255, 0, 255, 255} // Magenta for other polygons
+		}
+
+		// Draw polygon wireframe by connecting vertices
+		for i := 0; i < len(screenVertices); i++ {
+			next := (i + 1) % len(screenVertices)
+			current := screenVertices[i]
+			nextVertex := screenVertices[next]
+
+			vector.StrokeLine(
+				screen_camera,
+				float32(current.X), float32(current.Y),
+				float32(nextVertex.X), float32(nextVertex.Y),
+				2, wireframeColor, false,
+			)
+		}
+
+		// Draw vertex markers
+		for _, vertex := range screenVertices {
+			vector.StrokeCircle(
+				screen_camera,
+				float32(vertex.X), float32(vertex.Y),
+				3, 1, color.White, false,
+			)
+		}
 	}
 }
 func ApplyRotToPoint(p1 *Vec2.Vec2, rot float64) {

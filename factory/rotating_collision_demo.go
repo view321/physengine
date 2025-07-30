@@ -41,8 +41,8 @@ func CreateRotatingSquare(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, angularVel
 	mc.InverseInertia = 1 / mc.Inertia
 
 	box := components.AABB_Component.Get(entry)
-	box.Min = Vec2.Vec2{-60, -60}
-	box.Max = Vec2.Vec2{60, 200}
+	box.Min = Vec2.Vec2{X: -60, Y: -60}
+	box.Max = Vec2.Vec2{X: 60, Y: 200}
 
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.7
@@ -102,8 +102,8 @@ func CreateStationaryObject(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi
 	mc.InverseInertia = 1 / mc.Inertia
 
 	box := components.AABB_Component.Get(entry)
-	box.Min = Vec2.Vec2{-80, -80}
-	box.Max = Vec2.Vec2{80, 80}
+	box.Min = Vec2.Vec2{X: -80, Y: -80}
+	box.Max = Vec2.Vec2{X: 80, Y: 80}
 
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.5

@@ -25,8 +25,8 @@ func CreateTestSquare(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry
 	mc.Inertia = mc.Mass * 10000 // Simplified inertia calculation
 	mc.InverseInertia = 1 / mc.Inertia
 	box := components.AABB_Component.Get(entry)
-	box.Min = Vec2.Vec2{-100, -50}
-	box.Max = Vec2.Vec2{50, 50}
+	box.Min = Vec2.Vec2{X: -100, Y: -50}
+	box.Max = Vec2.Vec2{X: 50, Y: 50}
 	mat := components.MaterialComponent.Get(entry)
 	mat.Restitution = 0.8
 	return entry

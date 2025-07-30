@@ -32,6 +32,9 @@ func UpdateImprovedCollisions(e *ecs.ECS) {
 }
 
 func ResolveImprovedCollisions(e1, e2 *donburi.Entry) {
+	// Check for stuck objects before collision resolution
+	CheckForStuckObjects(e1, e2)
+
 	// Circle vs Circle (rotation doesn't affect circle collision)
 	if e1.HasComponent(components.CircleCollider) && e2.HasComponent(components.CircleCollider) {
 		if components.CirclesCollide(e1, e2) {
@@ -86,7 +89,7 @@ func ResolveImprovedCollisions(e1, e2 *donburi.Entry) {
 			}
 
 			var j float64 = ResolveWithImprovedAngularImpulse(e1, e2, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			ImprovedPositionalCorrection(e1, e2, normal, penetration, 0.2)
+			ImprovedPositionalCorrection(e1, e2, normal, penetration, 0.3) // Balanced correction
 			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
 		}
 	}
@@ -118,7 +121,7 @@ func ResolveImprovedCollisions(e1, e2 *donburi.Entry) {
 			}
 
 			var j float64 = ResolveWithImprovedAngularImpulse(box, circle, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			ImprovedPositionalCorrection(box, circle, normal, penetration, 0.2)
+			ImprovedPositionalCorrection(box, circle, normal, penetration, 0.3) // Balanced correction
 			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
 		}
 	}
@@ -139,7 +142,7 @@ func ResolveImprovedCollisions(e1, e2 *donburi.Entry) {
 			}
 
 			var j float64 = ResolveWithImprovedAngularImpulse(e1, e2, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			ImprovedPositionalCorrection(e1, e2, normal, penetration, 0.2)
+			ImprovedPositionalCorrection(e1, e2, normal, penetration, 0.3) // Increased correction percentage
 			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
 		}
 	}
@@ -439,7 +442,7 @@ func ResolveImprovedFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, collisionP
 
 // ImprovedPositionalCorrection prevents objects from pulling towards each other
 func ImprovedPositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth, percent float64) {
-	if penetration_depth < 0.001 { // Small threshold to prevent unnecessary corrections
+	if penetration_depth < 0.01 { // Increased threshold for better stability
 		return
 	}
 	m1 := components.MassComponent.Get(e1)
@@ -456,15 +459,137 @@ func ImprovedPositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetratio
 		return
 	}
 
-	correction := n.Mult(percent * penetration_depth / totalInverseMass)
-
-	// Clamp correction to prevent extreme values
-	maxCorrection := 10.0 // Adjust based on your physics scale
-	if correction.Magnitude() > maxCorrection {
-		correction.Normalize()
-		correction = correction.Mult(maxCorrection)
+	// Check for deep penetration and apply emergency separation
+	if penetration_depth > 15.0 {
+		// Emergency separation for very deep penetrations only
+		emergencySeparation := n.Mult(penetration_depth * 0.5)
+		components.ChangePos(e1, emergencySeparation.Mult(-m1.InverseMass))
+		components.ChangePos(e2, emergencySeparation.Mult(m2.InverseMass))
+		return
 	}
 
-	components.ChangePos(e1, correction.Mult(-m1.InverseMass))
-	components.ChangePos(e2, correction.Mult(m2.InverseMass))
+	// Use iterative correction for deep penetrations
+	iterations := 1
+	if penetration_depth > 5.0 {
+		iterations = 4 // More iterations for deep penetrations
+	} else if penetration_depth > 2.0 {
+		iterations = 2
+	}
+
+	for i := 0; i < iterations; i++ {
+		// Calculate correction for this iteration
+		correction := n.Mult(percent * penetration_depth / totalInverseMass / float64(iterations))
+
+		// Clamp correction to prevent extreme values
+		maxCorrection := 30.0 // Increased max correction
+		if correction.Magnitude() > maxCorrection {
+			correction.Normalize()
+			correction = correction.Mult(maxCorrection)
+		}
+
+		// Apply correction
+		components.ChangePos(e1, correction.Mult(-m1.InverseMass))
+		components.ChangePos(e2, correction.Mult(m2.InverseMass))
+	}
+}
+func CheckForStuckObjects(e1, e2 *donburi.Entry) {
+	tr1 := components.Transform.Get(e1)
+	tr2 := components.Transform.Get(e2)
+
+	if tr1 == nil || tr2 == nil {
+		return
+	}
+
+	// Calculate distance between objects
+	distance := Vec2.Distance(tr1.Pos, tr2.Pos)
+
+	// Check for different collision types and their expected minimum distances
+	var minDistance float64 = 0.0
+	var isStuck bool = false
+
+	// Circle vs Circle
+	if e1.HasComponent(components.CircleCollider) && e2.HasComponent(components.CircleCollider) {
+		crcl1 := components.CircleCollider.Get(e1)
+		crcl2 := components.CircleCollider.Get(e2)
+		if crcl1 != nil && crcl2 != nil {
+			minDistance = crcl1.Radius + crcl2.Radius
+			// Only apply emergency separation for very deep overlaps
+			if distance < minDistance*0.2 {
+				isStuck = true
+			}
+		}
+	}
+
+	// AABB vs AABB
+	if e1.HasComponent(components.AABB_Component) && e2.HasComponent(components.AABB_Component) {
+		aabb1 := components.AABB_Component.Get(e1)
+		aabb2 := components.AABB_Component.Get(e2)
+		if aabb1 != nil && aabb2 != nil {
+			// Approximate minimum distance for AABBs
+			width1 := aabb1.Max.X - aabb1.Min.X
+			height1 := aabb1.Max.Y - aabb1.Min.Y
+			width2 := aabb2.Max.X - aabb2.Min.X
+			height2 := aabb2.Max.Y - aabb2.Min.Y
+			minDistance = (width1 + height1 + width2 + height2) / 4
+
+			// Only apply emergency separation for very deep overlaps
+			if distance < minDistance*0.15 {
+				isStuck = true
+			}
+		}
+	}
+
+	// If objects are stuck, apply gentle separation
+	if isStuck {
+		GentleSeparation(e1, e2)
+	}
+}
+
+func GentleSeparation(e1, e2 *donburi.Entry) {
+	tr1 := components.Transform.Get(e1)
+	tr2 := components.Transform.Get(e2)
+
+	if tr1 == nil || tr2 == nil {
+		return
+	}
+
+	// Calculate separation vector
+	separationVector := Vec2.Vec2{
+		X: tr2.Pos.X - tr1.Pos.X,
+		Y: tr2.Pos.Y - tr1.Pos.Y,
+	}
+
+	// If objects are very close or overlapping, push them apart gently
+	if separationVector.Magnitude() < 1.0 {
+		// Create a default separation direction
+		separationVector = Vec2.Vec2{X: 1.0, Y: 0.0}
+	} else {
+		separationVector.Normalize()
+	}
+
+	// Apply gentle separation with mass-based distribution
+	m1 := components.MassComponent.Get(e1)
+	m2 := components.MassComponent.Get(e2)
+
+	if m1 == nil || m2 == nil {
+		return
+	}
+
+	// Calculate separation based on mass distribution
+	totalMass := m1.Mass + m2.Mass
+	if totalMass < 0.001 {
+		return
+	}
+
+	// Heavier objects move less
+	massRatio1 := m2.Mass / totalMass
+	massRatio2 := m1.Mass / totalMass
+
+	// Gentle separation distance
+	separationDistance := 2.0
+	separation := separationVector.Mult(separationDistance)
+
+	// Apply separation proportionally to mass
+	components.ChangePos(e1, separation.Mult(-massRatio1))
+	components.ChangePos(e2, separation.Mult(massRatio2))
 }
