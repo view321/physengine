@@ -28,7 +28,7 @@ func (ms *MyScene) Draw(screen *ebiten.Image) {
 func (ms *MyScene) configure() {
 	ms.ecs = ecs.NewECS(donburi.NewWorld())
 	ms.ecs.AddSystem(systems.UpdateCamera)
-	ms.ecs.AddSystem(systems.UpdateImprovedCollisions)
+	ms.ecs.AddSystem(systems.UpdateCollisions)
 	ms.ecs.AddSystem(systems.UpdateVelocity)
 	ms.ecs.AddSystem(systems.UpdateTorque)
 	ms.ecs.AddSystem(systems.UpdateAngularVelocity)
