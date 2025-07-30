@@ -103,6 +103,17 @@ func PolygonvsCircle(poly, circle *donburi.Entry) (bool, Vec2.Vec2, float64) {
 		normal = Vec2.Vec2{X: 1, Y: 0}
 	}
 
+	// Ensure normal points from polygon to circle
+	polyToCircle := Vec2.Vec2{
+		X: circleTr.Pos.X - polyTr.Pos.X,
+		Y: circleTr.Pos.Y - polyTr.Pos.Y,
+	}
+
+	// If normal points in wrong direction, flip it
+	if Vec2.DotProduct(normal, polyToCircle) < 0 {
+		normal = normal.Mult(-1)
+	}
+
 	penetration := circleComp.Radius - distance
 	return true, normal, penetration
 }

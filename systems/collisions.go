@@ -35,6 +35,27 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 	// Check for stuck objects before collision resolution
 	CheckForStuckObjects(e1, e2)
 
+	// Add minimum separation check
+	tr1 := components.Transform.Get(e1)
+	tr2 := components.Transform.Get(e2)
+	if tr1 != nil && tr2 != nil {
+		distance := Vec2.Distance(tr1.Pos, tr2.Pos)
+		minSeparation := 0.1 // Minimum separation distance
+		if distance < minSeparation {
+			// Push objects apart slightly
+			separationVector := Vec2.Vec2{
+				X: tr2.Pos.X - tr1.Pos.X,
+				Y: tr2.Pos.Y - tr1.Pos.Y,
+			}
+			if separationVector.Magnitude() > 0.001 {
+				separationVector.Normalize()
+				separationVector = separationVector.Mult(minSeparation - distance)
+				components.ChangePos(e1, separationVector.Mult(-0.5))
+				components.ChangePos(e2, separationVector.Mult(0.5))
+			}
+		}
+	}
+
 	// Circle vs Circle (rotation doesn't affect circle collision)
 	if e1.HasComponent(components.CircleCollider) && e2.HasComponent(components.CircleCollider) {
 		if components.CirclesCollide(e1, e2) {
@@ -133,16 +154,27 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 			mat1 := components.MaterialComponent.Get(e1)
 			mat2 := components.MaterialComponent.Get(e2)
 
-			// Calculate collision point (center of overlap)
+			// Ensure normal points from e1 to e2
 			tr1 := components.Transform.Get(e1)
 			tr2 := components.Transform.Get(e2)
+			centerToCenter := Vec2.Vec2{
+				X: tr2.Pos.X - tr1.Pos.X,
+				Y: tr2.Pos.Y - tr1.Pos.Y,
+			}
+
+			// If normal points in wrong direction, flip it
+			if Vec2.DotProduct(normal, centerToCenter) < 0 {
+				normal = normal.Mult(-1)
+			}
+
+			// Calculate better collision point using penetration depth
 			collisionPoint := Vec2.Vec2{
-				X: (tr1.Pos.X + tr2.Pos.X) / 2,
-				Y: (tr1.Pos.Y + tr2.Pos.Y) / 2,
+				X: tr1.Pos.X + normal.X*penetration*0.5,
+				Y: tr1.Pos.Y + normal.Y*penetration*0.5,
 			}
 
 			var j float64 = ResolveWithAngularImpulse(e1, e2, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			PositionalCorrection(e1, e2, normal, penetration, 0.3) // Increased correction percentage
+			PositionalCorrection(e1, e2, normal, penetration, 0.2) // Reduced correction percentage
 			ResolveFriction(e1, e2, normal, collisionPoint, j)
 		}
 	}
@@ -165,16 +197,28 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 			mat1 := components.MaterialComponent.Get(e1)
 			mat2 := components.MaterialComponent.Get(e2)
 
-			// Calculate collision point
+			// Ensure normal points from polygon to circle
 			polyTr := components.Transform.Get(poly)
 			circleTr := components.Transform.Get(circle)
+			polyToCircle := Vec2.Vec2{
+				X: circleTr.Pos.X - polyTr.Pos.X,
+				Y: circleTr.Pos.Y - polyTr.Pos.Y,
+			}
+
+			// If normal points in wrong direction, flip it
+			if Vec2.DotProduct(normal, polyToCircle) < 0 {
+				normal = normal.Mult(-1)
+			}
+
+			// Calculate better collision point
+			circleComp := components.CircleCollider.Get(circle)
 			collisionPoint := Vec2.Vec2{
-				X: (polyTr.Pos.X + circleTr.Pos.X) / 2,
-				Y: (polyTr.Pos.Y + circleTr.Pos.Y) / 2,
+				X: circleTr.Pos.X - normal.X*circleComp.Radius*0.5,
+				Y: circleTr.Pos.Y - normal.Y*circleComp.Radius*0.5,
 			}
 
 			var j float64 = ResolveWithAngularImpulse(poly, circle, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			PositionalCorrection(poly, circle, normal, penetration, 0.2)
+			PositionalCorrection(poly, circle, normal, penetration, 0.15) // Reduced correction percentage
 			ResolveFriction(e1, e2, normal, collisionPoint, j)
 		}
 	}
@@ -227,14 +271,25 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 					mat1 := components.MaterialComponent.Get(e1)
 					mat2 := components.MaterialComponent.Get(e2)
 
-					// Calculate collision point
+					// Ensure normal points from polygon to AABB
+					polyToBox := Vec2.Vec2{
+						X: boxTr.Pos.X - polyTr.Pos.X,
+						Y: boxTr.Pos.Y - polyTr.Pos.Y,
+					}
+
+					// If normal points in wrong direction, flip it
+					if Vec2.DotProduct(normal, polyToBox) < 0 {
+						normal = normal.Mult(-1)
+					}
+
+					// Calculate better collision point
 					collisionPoint := Vec2.Vec2{
-						X: (polyTr.Pos.X + boxTr.Pos.X) / 2,
-						Y: (polyTr.Pos.Y + boxTr.Pos.Y) / 2,
+						X: polyTr.Pos.X + normal.X*penetration*0.5,
+						Y: polyTr.Pos.Y + normal.Y*penetration*0.5,
 					}
 
 					var j float64 = ResolveWithAngularImpulse(poly, box, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-					PositionalCorrection(poly, box, normal, penetration, 0.2)
+					PositionalCorrection(poly, box, normal, penetration, 0.15) // Reduced correction percentage
 					ResolveFriction(e1, e2, normal, collisionPoint, j)
 				}
 			}
@@ -462,7 +517,7 @@ func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth,
 	// Check for deep penetration and apply emergency separation
 	if penetration_depth > 15.0 {
 		// Emergency separation for very deep penetrations only
-		emergencySeparation := n.Mult(penetration_depth * 0.5)
+		emergencySeparation := n.Mult(penetration_depth * 0.3) // Reduced from 0.5
 		components.ChangePos(e1, emergencySeparation.Mult(-m1.InverseMass))
 		components.ChangePos(e2, emergencySeparation.Mult(m2.InverseMass))
 		return
@@ -471,7 +526,7 @@ func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth,
 	// Use iterative correction for deep penetrations
 	iterations := 1
 	if penetration_depth > 5.0 {
-		iterations = 4 // More iterations for deep penetrations
+		iterations = 3 // Reduced from 4
 	} else if penetration_depth > 2.0 {
 		iterations = 2
 	}
@@ -481,13 +536,13 @@ func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth,
 		correction := n.Mult(percent * penetration_depth / totalInverseMass / float64(iterations))
 
 		// Clamp correction to prevent extreme values
-		maxCorrection := 30.0 // Increased max correction
+		maxCorrection := 20.0 // Reduced from 30.0
 		if correction.Magnitude() > maxCorrection {
 			correction.Normalize()
 			correction = correction.Mult(maxCorrection)
 		}
 
-		// Apply correction
+		// Apply correction - ensure objects move apart, not together
 		components.ChangePos(e1, correction.Mult(-m1.InverseMass))
 		components.ChangePos(e2, correction.Mult(m2.InverseMass))
 	}

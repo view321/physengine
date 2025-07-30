@@ -88,7 +88,38 @@ func SatCollision(corners1, corners2 []Vec2.Vec2) (bool, Vec2.Vec2, float64) {
 		}
 	}
 
+	// Ensure normal points from polygon1 to polygon2
+	center1 := getPolygonCenter(corners1)
+	center2 := getPolygonCenter(corners2)
+	centerToCenter := Vec2.Vec2{
+		X: center2.X - center1.X,
+		Y: center2.Y - center1.Y,
+	}
+
+	// If normal points in wrong direction, flip it
+	if Vec2.DotProduct(collisionNormal, centerToCenter) < 0 {
+		collisionNormal = collisionNormal.Mult(-1)
+	}
+
 	return true, collisionNormal, minOverlap
+}
+
+// getPolygonCenter calculates the center of a polygon
+func getPolygonCenter(vertices []Vec2.Vec2) Vec2.Vec2 {
+	if len(vertices) == 0 {
+		return Vec2.Vec2{}
+	}
+
+	center := Vec2.Vec2{}
+	for _, vertex := range vertices {
+		center.X += vertex.X
+		center.Y += vertex.Y
+	}
+
+	center.X /= float64(len(vertices))
+	center.Y /= float64(len(vertices))
+
+	return center
 }
 
 // getAxes returns the axes to test for SAT collision detection
