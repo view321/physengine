@@ -23,7 +23,7 @@ func CreateRotatingCollisionDemo(ecs *ecs.ECS) {
 
 // CreateRotatingSquare creates a square with rotation and collision
 func CreateRotatingSquare(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, angularVel float64) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -54,7 +54,7 @@ func CreateRotatingSquare(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, angularVel
 
 // CreateRotatingCircle creates a circle with rotation and collision
 func CreateRotatingCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, angularVel float64) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -84,7 +84,7 @@ func CreateRotatingCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, angularVel
 
 // CreateStationaryObject creates a stationary object for collision testing
 func CreateStationaryObject(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel

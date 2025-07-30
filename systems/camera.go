@@ -79,38 +79,52 @@ func DrawCamera(e *ecs.ECS, screen_camera *ebiten.Image) {
 		aabb := components.AABB_Component.Get(entry)
 		obj_tr := components.Transform.Get(entry)
 
-		// Calculate world position relative to camera
-		world_x := obj_tr.Pos.X - camera_tr.Pos.X
-		world_y := obj_tr.Pos.Y - camera_tr.Pos.Y
+		// AABB bounds are in world coordinates relative to object position
+		// Calculate the four corners of the AABB in world space
+		worldCorners := []Vec2.Vec2{
+			{X: obj_tr.Pos.X + aabb.Min.X, Y: obj_tr.Pos.Y + aabb.Min.Y}, // bottom-left
+			{X: obj_tr.Pos.X + aabb.Max.X, Y: obj_tr.Pos.Y + aabb.Min.Y}, // bottom-right
+			{X: obj_tr.Pos.X + aabb.Max.X, Y: obj_tr.Pos.Y + aabb.Max.Y}, // top-right
+			{X: obj_tr.Pos.X + aabb.Min.X, Y: obj_tr.Pos.Y + aabb.Max.Y}, // top-left
+		}
 
-		// Create AABB corner points in world coordinates relative to object center
-		center := Vec2.Vec2{X: world_x, Y: world_y}
-		p1 := Vec2.Vec2{X: center.X + aabb.Min.X, Y: center.Y + aabb.Min.Y}
-		p2 := Vec2.Vec2{X: center.X + aabb.Max.X, Y: center.Y + aabb.Max.Y}
-		p3 := Vec2.Vec2{X: center.X + aabb.Min.X, Y: center.Y + aabb.Max.Y}
-		p4 := Vec2.Vec2{X: center.X + aabb.Max.X, Y: center.Y + aabb.Min.Y}
+		// Apply rotation around object center if object is rotated
+		if obj_tr.Rot != 0 {
+			objectCenter := obj_tr.Pos
+			for i := range worldCorners {
+				// Translate to origin
+				relativeX := worldCorners[i].X - objectCenter.X
+				relativeY := worldCorners[i].Y - objectCenter.Y
 
-		// Apply rotation around object center
-		ApplyRotToPointAroundCenter(&p1, center, obj_tr.Rot)
-		ApplyRotToPointAroundCenter(&p2, center, obj_tr.Rot)
-		ApplyRotToPointAroundCenter(&p3, center, obj_tr.Rot)
-		ApplyRotToPointAroundCenter(&p4, center, obj_tr.Rot)
+				// Apply rotation
+				rotatedX := relativeX*math.Cos(obj_tr.Rot) - relativeY*math.Sin(obj_tr.Rot)
+				rotatedY := relativeX*math.Sin(obj_tr.Rot) + relativeY*math.Cos(obj_tr.Rot)
+
+				// Translate back
+				worldCorners[i].X = objectCenter.X + rotatedX
+				worldCorners[i].Y = objectCenter.Y + rotatedY
+			}
+		}
 
 		// Convert world coordinates to screen coordinates
-		// Invert Y axis so it points up
-		p1.X = p1.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
-		p1.Y = -p1.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
-		p2.X = p2.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
-		p2.Y = -p2.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
-		p3.X = p3.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
-		p3.Y = -p3.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
-		p4.X = p4.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
-		p4.Y = -p4.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+		screenCorners := make([]Vec2.Vec2, 4)
+		for i, worldCorner := range worldCorners {
+			// Calculate relative to camera
+			relativeX := worldCorner.X - camera_tr.Pos.X
+			relativeY := worldCorner.Y - camera_tr.Pos.Y
 
-		vector.StrokeLine(screen_camera, float32(p1.X), float32(p1.Y), float32(p3.X), float32(p3.Y), 2, color.White, false)
-		vector.StrokeLine(screen_camera, float32(p2.X), float32(p2.Y), float32(p4.X), float32(p4.Y), 2, color.White, false)
-		vector.StrokeLine(screen_camera, float32(p2.X), float32(p2.Y), float32(p3.X), float32(p3.Y), 2, color.White, false)
-		vector.StrokeLine(screen_camera, float32(p4.X), float32(p4.Y), float32(p1.X), float32(p1.Y), 2, color.White, false)
+			// Convert to screen coordinates (invert Y axis)
+			screenCorners[i] = Vec2.Vec2{
+				X: relativeX*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2,
+				Y: -relativeY*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2,
+			}
+		}
+
+		// Draw the AABB wireframe
+		vector.StrokeLine(screen_camera, float32(screenCorners[0].X), float32(screenCorners[0].Y), float32(screenCorners[1].X), float32(screenCorners[1].Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(screenCorners[1].X), float32(screenCorners[1].Y), float32(screenCorners[2].X), float32(screenCorners[2].Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(screenCorners[2].X), float32(screenCorners[2].Y), float32(screenCorners[3].X), float32(screenCorners[3].Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(screenCorners[3].X), float32(screenCorners[3].Y), float32(screenCorners[0].X), float32(screenCorners[0].Y), 2, color.White, false)
 	}
 	query3 := donburi.NewQuery(filter.Contains(components.CircleCollider))
 	for entry := range query3.Iter(e.World) {

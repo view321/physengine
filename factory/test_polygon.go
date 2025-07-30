@@ -11,7 +11,7 @@ import (
 
 // CreateTestTriangle creates a triangular polygon
 func CreateTestTriangle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent, components.GravityTag, components.ForceComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -48,7 +48,7 @@ func CreateTestTriangle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Ent
 
 // CreateTestPentagon creates a pentagonal polygon
 func CreateTestPentagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.GravityTag, components.ForceComponent, components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -81,7 +81,7 @@ func CreateTestPentagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Ent
 
 // CreateTestHexagon creates a hexagonal polygon
 func CreateTestHexagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.GravityTag, components.ForceComponent, components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -114,7 +114,7 @@ func CreateTestHexagon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entr
 
 // CreateTestRectangle creates a rectangular polygon (alternative to AABB)
 func CreateTestRectangle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, width, height float64) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.GravityTag, components.ForceComponent, components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel

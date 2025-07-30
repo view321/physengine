@@ -9,7 +9,7 @@ import (
 )
 
 func UpdateTorque(e *ecs.ECS) {
-	query := donburi.NewQuery(filter.Contains(components.Torque, components.AngularVelocity, components.MassComponent))
+	query := donburi.NewQuery(filter.Contains(components.TorqueComponent, components.AngularVelocity, components.MassComponent))
 	for entry := range query.Iter(e.World) {
 		torque := components.GetTorque(entry)
 		mass := components.MassComponent.Get(entry)

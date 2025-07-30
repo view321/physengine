@@ -13,6 +13,8 @@ func UpdateVelocity(e *ecs.ECS) {
 	for entry := range query.Iter(e.World) {
 		tr := components.Transform.Get(entry)
 		vel := components.Velocity.Get(entry)
-		components.SetPos(entry, tr.Pos.Add(vel.Velocity.Mult(float64(e.Time.DeltaTime().Seconds()))))
+		deltaTime := float64(e.Time.DeltaTime().Seconds())
+		newPos := tr.Pos.Add(vel.Velocity.Mult(deltaTime))
+		components.SetPos(entry, newPos)
 	}
 }

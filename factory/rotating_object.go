@@ -11,7 +11,7 @@ import (
 
 // CreateRotatingObject creates an object with applied torque for demonstration
 func CreateRotatingObject(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2, torque float64) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.GravityTag, components.ForceComponent, components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel

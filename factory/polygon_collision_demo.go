@@ -32,7 +32,7 @@ func CreatePolygonCollisionDemo(ecs *ecs.ECS) {
 
 // CreatePolygonDemoCircle creates a circle for polygon collision demo
 func CreatePolygonDemoCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -61,7 +61,7 @@ func CreatePolygonDemoCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donbur
 
 // CreatePolygonDemoBox creates an AABB box for polygon collision demo
 func CreatePolygonDemoBox(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.AABB_Component, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -91,7 +91,7 @@ func CreatePolygonDemoBox(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.E
 
 // CreateStationaryPolygon creates a stationary polygon for collision testing
 func CreateStationaryPolygon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.PolygonCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel
@@ -123,7 +123,7 @@ func CreateStationaryPolygon(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donbur
 
 // CreateStationaryCircle creates a stationary circle for collision testing
 func CreateStationaryCircle(ecs *ecs.ECS, pos Vec2.Vec2, vel Vec2.Vec2) *donburi.Entry {
-	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.Torque)
+	entity := ecs.World.Create(components.MaterialComponent, components.Transform, components.CircleCollider, components.Drawable, components.MassComponent, components.Velocity, components.AngularVelocity, components.TorqueComponent)
 	entry := ecs.World.Entry(entity)
 	components.SetPos(entry, pos)
 	components.Velocity.Get(entry).Velocity = vel

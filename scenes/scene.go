@@ -32,6 +32,8 @@ func (ms *MyScene) configure() {
 	ms.ecs.AddSystem(systems.UpdateVelocity)
 	ms.ecs.AddSystem(systems.UpdateTorque)
 	ms.ecs.AddSystem(systems.UpdateAngularVelocity)
+	ms.ecs.AddSystem(systems.UpdateForce)
+	ms.ecs.AddSystem(systems.ApplyContinuousForce)
 	ms.ecs.AddRenderer(0, systems.DrawCamera)
 	factory.CreateCamera(ms.ecs)
 	factory.CreateCollisionResolver(ms.ecs)
@@ -43,7 +45,9 @@ func (ms *MyScene) configure() {
 	factory.CreateRotatingCollisionDemo(ms.ecs)
 
 	// Original demo objects
-	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: 0, Y: 300}, Vec2.Vec2{X: 0, Y: -150})
-	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 100, Y: -100}, Vec2.Vec2{X: 0, Y: 100})
-	factory.CreateRotatingObject(ms.ecs, Vec2.Vec2{X: -200, Y: 0}, Vec2.Vec2{X: 50, Y: 0}, 5000.0) // Object with applied torque
+	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: 0, Y: 400}, Vec2.Vec2{X: 0, Y: -50})
+	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 100, Y: 400}, Vec2.Vec2{X: 0, Y: -50})
+	factory.CreateRotatingObject(ms.ecs, Vec2.Vec2{X: -200, Y: 400}, Vec2.Vec2{X: 50, Y: -50}, 5000.0)
+	factory.CreatePlatform(ms.ecs)
+	factory.CreateConstForces(ms.ecs)
 }

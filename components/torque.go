@@ -6,11 +6,11 @@ type TorqueData struct {
 	Torque float64
 }
 
-var Torque = donburi.NewComponentType[TorqueData]()
+var TorqueComponent = donburi.NewComponentType[TorqueData]()
 
 // SetTorque sets the torque applied to an entity
 func SetTorque(entry *donburi.Entry, torque float64) {
-	torqueData := Torque.Get(entry)
+	torqueData := TorqueComponent.Get(entry)
 	if torqueData != nil {
 		torqueData.Torque = torque
 	}
@@ -18,7 +18,7 @@ func SetTorque(entry *donburi.Entry, torque float64) {
 
 // AddTorque adds to the current torque
 func AddTorque(entry *donburi.Entry, torque float64) {
-	torqueData := Torque.Get(entry)
+	torqueData := TorqueComponent.Get(entry)
 	if torqueData != nil {
 		torqueData.Torque += torque
 	}
@@ -26,7 +26,7 @@ func AddTorque(entry *donburi.Entry, torque float64) {
 
 // GetTorque returns the current torque
 func GetTorque(entry *donburi.Entry) float64 {
-	torqueData := Torque.Get(entry)
+	torqueData := TorqueComponent.Get(entry)
 	if torqueData != nil {
 		return torqueData.Torque
 	}
