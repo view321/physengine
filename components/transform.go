@@ -134,3 +134,30 @@ func Rotate(entry *donburi.Entry, rot float64){
 
 	old_transform.Rot = old_transform.Rot + rot
 }
+
+// GetRotationMatrix returns a 2x2 rotation matrix for the given angle
+func GetRotationMatrix(angle float64) [4]float64 {
+	cos := math.Cos(angle)
+	sin := math.Sin(angle)
+	return [4]float64{cos, -sin, sin, cos}
+}
+
+// RotatePoint rotates a point around the origin by the given angle
+func RotatePoint(point Vec2.Vec2, angle float64) Vec2.Vec2 {
+	cos := math.Cos(angle)
+	sin := math.Sin(angle)
+	return Vec2.Vec2{
+		X: point.X*cos - point.Y*sin,
+		Y: point.X*sin + point.Y*cos,
+	}
+}
+
+// RotatePointAround rotates a point around a center point by the given angle
+func RotatePointAround(point Vec2.Vec2, center Vec2.Vec2, angle float64) Vec2.Vec2 {
+	// Translate to origin
+	translated := Vec2.Vec2{X: point.X - center.X, Y: point.Y - center.Y}
+	// Rotate
+	rotated := RotatePoint(translated, angle)
+	// Translate back
+	return Vec2.Vec2{X: rotated.X + center.X, Y: rotated.Y + center.Y}
+}

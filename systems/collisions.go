@@ -189,7 +189,7 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 		}
 	}
 }
-func ResolveWithData(e1, e2 *donburi.Entry, normal Vec2.Vec2, res1, res2 float64) float64{
+func ResolveWithData(e1, e2 *donburi.Entry, normal Vec2.Vec2, res1, res2 float64) float64 {
 	vel1 := donburi.Get[components.VelocityData](e1, components.Velocity)
 	vel2 := donburi.Get[components.VelocityData](e2, components.Velocity)
 	m1 := donburi.Get[components.MassData](e1, components.MassComponent)
@@ -208,7 +208,7 @@ func ResolveWithData(e1, e2 *donburi.Entry, normal Vec2.Vec2, res1, res2 float64
 	}
 	return j
 }
-func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, j float64){
+func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, j float64) {
 	vel1 := components.Velocity.Get(e1)
 	vel2 := components.Velocity.Get(e2)
 	m1 := components.MassComponent.Get(e1)
@@ -222,12 +222,12 @@ func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, j float64){
 	jt := -Vec2.DotProduct(vel_diff, tangent)
 	jt = jt / (m1.InverseMass + m2.InverseMass)
 
-	mu := math.Sqrt(math.Pow(mat1.StaticFriction, 2)+math.Pow(mat2.StaticFriction, 2))
+	mu := math.Sqrt(math.Pow(mat1.StaticFriction, 2) + math.Pow(mat2.StaticFriction, 2))
 	var frictionImpulse Vec2.Vec2
-	if math.Abs(jt)<j*mu{
+	if math.Abs(jt) < j*mu {
 		frictionImpulse = tangent.Mult(jt)
-	}else{
-		var dynamicFriction float64 = math.Sqrt(math.Pow(mat1.DynamicFriction, 2)+math.Pow(mat2.DynamicFriction, 2))
+	} else {
+		var dynamicFriction float64 = math.Sqrt(math.Pow(mat1.DynamicFriction, 2) + math.Pow(mat2.DynamicFriction, 2))
 		frictionImpulse = tangent.Mult(-j * dynamicFriction)
 	}
 	vel1.Velocity.AddUpdate(frictionImpulse.Mult(-m1.InverseMass))
