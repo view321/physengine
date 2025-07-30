@@ -28,12 +28,13 @@ func (ms *MyScene) Draw(screen *ebiten.Image) {
 func (ms *MyScene) configure() {
 	ms.ecs = ecs.NewECS(donburi.NewWorld())
 	ms.ecs.AddSystem(systems.UpdateCamera)
-	ms.ecs.AddSystem(systems.UpdateCollisions)
+	ms.ecs.AddSystem(systems.UpdateImprovedCollisions)
 	ms.ecs.AddSystem(systems.UpdateVelocity)
+	ms.ecs.AddSystem(systems.UpdateTorque)
+	ms.ecs.AddSystem(systems.UpdateAngularVelocity)
 	ms.ecs.AddRenderer(0, systems.DrawCamera)
 	factory.CreateCamera(ms.ecs)
 	factory.CreateCollisionResolver(ms.ecs)
-<<<<<<< HEAD
 
 	// Create demo objects for polygon collision testing
 	factory.CreatePolygonCollisionDemo(ms.ecs)
@@ -42,8 +43,7 @@ func (ms *MyScene) configure() {
 	factory.CreateRotatingCollisionDemo(ms.ecs)
 
 	// Original demo objects
-=======
->>>>>>> parent of 069eade (rotations)
 	factory.CreateTestSquare(ms.ecs, Vec2.Vec2{X: 0, Y: 300}, Vec2.Vec2{X: 0, Y: -150})
 	factory.CreateTestCircle(ms.ecs, Vec2.Vec2{X: 100, Y: -100}, Vec2.Vec2{X: 0, Y: 100})
+	factory.CreateRotatingObject(ms.ecs, Vec2.Vec2{X: -200, Y: 0}, Vec2.Vec2{X: 50, Y: 0}, 5000.0) // Object with applied torque
 }
