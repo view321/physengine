@@ -36,6 +36,9 @@ func (ms *MyScene) configure() {
 	factory.CreateCamera(ms.ecs)
 	factory.CreateCollisionResolver(ms.ecs)
 
+	// Create demo objects for polygon collision testing
+	factory.CreatePolygonCollisionDemo(ms.ecs)
+
 	// Create demo objects for rotation-aware collision testing
 	factory.CreateRotatingCollisionDemo(ms.ecs)
 
