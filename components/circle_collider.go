@@ -10,8 +10,6 @@ import (
 
 type CircleColliderData struct {
 	Radius            float64
-	Restitution       float64
-	FinishedResolving bool
 }
 
 var CircleCollider = donburi.NewComponentType[CircleColliderData]()

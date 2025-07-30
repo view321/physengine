@@ -39,14 +39,25 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 			tr2 := components.Transform.Get(e2)
 			crcl1 := components.CircleCollider.Get(e1)
 			crcl2 := components.CircleCollider.Get(e2)
+			mat1 := components.MaterialComponent.Get(e1)
+			mat2 := components.MaterialComponent.Get(e2)
 
 			// Calculate collision normal (from e1 to e2)
 			normal := tr2.Pos.Add(tr1.Pos.Mult(-1))
 			distance := normal.Magnitude()
 
-			ResolveWithData(e1, e2, normal, crcl1.Restitution, crcl2.Restitution)
+			// Normalize the normal vector to prevent extreme velocity changes
+			if distance > 0.001 {
+				normal = normal.Mult(1.0 / distance)
+			} else {
+				// If circles are exactly on top of each other, use a default normal
+				normal = Vec2.Vec2{X: 1, Y: 0}
+			}
+
+			var j float64 = ResolveWithData(e1, e2, normal, mat1.Restitution, mat2.Restitution)
 			penetration := (crcl1.Radius + crcl2.Radius) - distance
 			PositionalCorrection(e1, e2, normal, penetration, 0.2)
+			ResolveFriction(e1, e2, normal, j)
 		}
 	}
 	if e1.HasComponent(components.AABB_Component) && e2.HasComponent(components.AABB_Component) {
@@ -62,6 +73,9 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 
 			aabb1 := components.AABB_Component.Get(e1)
 			aabb2 := components.AABB_Component.Get(e2)
+
+			mat1 := components.MaterialComponent.Get(e1)
+			mat2 := components.MaterialComponent.Get(e2)
 
 			// Calculate half-widths and half-heights
 			a_width := (aabb1.Max.X - aabb1.Min.X) / 2
@@ -98,8 +112,9 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 					penetration = y_overlap
 				}
 
-				ResolveWithData(e1, e2, normal, aabb1.Restitution, aabb2.Restitution)
+				var j float64 = ResolveWithData(e1, e2, normal, mat1.Restitution, mat2.Restitution)
 				PositionalCorrection(e1, e2, normal, penetration, 0.2)
+				ResolveFriction(e1, e2, normal, j)
 			}
 		}
 	}
@@ -120,6 +135,8 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 		circle_tr := components.Transform.Get(circle)
 		circle_comp := components.CircleCollider.Get(circle)
 
+		mat1 := components.MaterialComponent.Get(e1)
+		mat2 := components.MaterialComponent.Get(e2)
 		// Vector from box center to circle center
 		circle_to_box := circle_tr.Pos.Add(box_tr.Pos.Mult(-1))
 
@@ -166,26 +183,55 @@ func ResolveCollisions(e1, e2 *donburi.Entry) {
 				penetration = circle_comp.Radius - distance
 			}
 
-			ResolveWithData(box, circle, normal, box_col.Restitution, circle_comp.Restitution)
+			var j float64 = ResolveWithData(box, circle, normal, mat1.Restitution, mat2.Restitution)
 			PositionalCorrection(box, circle, normal, penetration, 0.2)
+			ResolveFriction(e1, e2, normal, j)
 		}
 	}
 }
-func ResolveWithData(e1, e2 *donburi.Entry, normal Vec2.Vec2, res1, res2 float64) {
+func ResolveWithData(e1, e2 *donburi.Entry, normal Vec2.Vec2, res1, res2 float64) float64{
 	vel1 := donburi.Get[components.VelocityData](e1, components.Velocity)
 	vel2 := donburi.Get[components.VelocityData](e2, components.Velocity)
 	m1 := donburi.Get[components.MassData](e1, components.MassComponent)
 	m2 := donburi.Get[components.MassData](e2, components.MassComponent)
+
 	vel_diff := vel2.Velocity.Add(vel1.Velocity.Mult(-1))
 	vel_along_normal := Vec2.DotProduct(normal, vel_diff)
+	var j float64
 	if vel_along_normal <= 0 {
 		e := math.Min(res1, res2)
-		j := -(1 + e) * vel_along_normal
-		j /= 1/m1.Mass + 1/m2.Mass
+		j = -(1 + e) * vel_along_normal
+		j /= m1.InverseMass + m2.InverseMass
 		impulse := normal.Mult(j)
-		vel1.Velocity = vel1.Velocity.Add(impulse.Mult(-1 / m1.Mass))
-		vel2.Velocity = vel2.Velocity.Add(impulse.Mult(1 / m2.Mass))
+		vel1.Velocity = vel1.Velocity.Add(impulse.Mult(-m1.InverseMass))
+		vel2.Velocity = vel2.Velocity.Add(impulse.Mult(m2.InverseMass))
 	}
+	return j
+}
+func ResolveFriction(e1, e2 *donburi.Entry, normal Vec2.Vec2, j float64){
+	vel1 := components.Velocity.Get(e1)
+	vel2 := components.Velocity.Get(e2)
+	m1 := components.MassComponent.Get(e1)
+	m2 := components.MassComponent.Get(e2)
+	mat1 := components.MaterialComponent.Get(e1)
+	mat2 := components.MaterialComponent.Get(e2)
+	vel_diff := vel2.Velocity.Add(vel1.Velocity.Mult(-1))
+	tangent := vel_diff.Add(normal.Mult(-1 * Vec2.DotProduct(vel_diff, normal)))
+	tangent.Normalize()
+
+	jt := -Vec2.DotProduct(vel_diff, tangent)
+	jt = jt / (m1.InverseMass + m2.InverseMass)
+
+	mu := math.Sqrt(math.Pow(mat1.StaticFriction, 2)+math.Pow(mat2.StaticFriction, 2))
+	var frictionImpulse Vec2.Vec2
+	if math.Abs(jt)<j*mu{
+		frictionImpulse = tangent.Mult(jt)
+	}else{
+		var dynamicFriction float64 = math.Sqrt(math.Pow(mat1.DynamicFriction, 2)+math.Pow(mat2.DynamicFriction, 2))
+		frictionImpulse = tangent.Mult(-j * dynamicFriction)
+	}
+	vel1.Velocity.AddUpdate(frictionImpulse.Mult(-m1.InverseMass))
+	vel2.Velocity.AddUpdate(frictionImpulse.Mult(m2.InverseMass))
 }
 func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth, percent float64) {
 	if penetration_depth < 0 {
@@ -193,7 +239,13 @@ func PositionalCorrection(e1, e2 *donburi.Entry, n Vec2.Vec2, penetration_depth,
 	}
 	m1 := components.MassComponent.Get(e1)
 	m2 := components.MassComponent.Get(e2)
-	correction := n.Mult(percent * penetration_depth / (1/m1.Mass + 1/m2.Mass))
-	components.ChangePos(e1, correction.Mult(-1/m1.Mass))
-	components.ChangePos(e2, correction.Mult(1/m2.Mass))
+
+	// Safety checks to prevent null pointer issues
+	if m1 == nil || m2 == nil {
+		return
+	}
+
+	correction := n.Mult(percent * penetration_depth / (m1.InverseMass + m2.InverseMass))
+	components.ChangePos(e1, correction.Mult(-m1.InverseMass))
+	components.ChangePos(e2, correction.Mult(m2.InverseMass))
 }

@@ -52,3 +52,12 @@ func Add(v1, v2 Vec2) Vec2 {
 func Distance(v1, v2 Vec2) float64 {
 	return math.Sqrt(math.Pow(v1.X-v2.X, 2) + math.Pow(v1.Y-v2.Y, 2))
 }
+func CrossProductVecVec(a, b Vec2) float64{
+	return a.X * b.Y - a.Y * b.X
+}
+func CrossProductVecNum(a Vec2, s float64) Vec2{
+	return Vec2{s*a.Y, -s*a.X}
+}
+func CrossProductNumVec(s float64, a Vec2) Vec2{
+	return Vec2{ -s * a.Y, s * a.X }
+}

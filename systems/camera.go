@@ -1,10 +1,13 @@
 package systems
 
 import (
+	"image/color"
+	"math"
 	"physengine/components"
 	Vec2 "physengine/helpers/vec2"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/yohamta/donburi"
 	"github.com/yohamta/donburi/ecs"
 	"github.com/yohamta/donburi/filter"
@@ -70,4 +73,83 @@ func DrawCamera(e *ecs.ECS, screen_camera *ebiten.Image) {
 
 		screen_camera.DrawImage(obj_drawable.Sprite, op)
 	}
+
+	query2 := donburi.NewQuery(filter.Contains(components.AABB_Component))
+	for entry := range query2.Iter(e.World) {
+		aabb := components.AABB_Component.Get(entry)
+		obj_tr := components.Transform.Get(entry)
+
+		// Calculate world position relative to camera
+		world_x := obj_tr.Pos.X - camera_tr.Pos.X
+		world_y := obj_tr.Pos.Y - camera_tr.Pos.Y
+
+		// Create AABB corner points in world coordinates relative to object center
+		center := Vec2.Vec2{world_x, world_y}
+		p1 := Vec2.Vec2{center.X + aabb.Min.X, center.Y + aabb.Min.Y}
+		p2 := Vec2.Vec2{center.X + aabb.Max.X, center.Y + aabb.Max.Y}
+		p3 := Vec2.Vec2{center.X + aabb.Min.X, center.Y + aabb.Max.Y}
+		p4 := Vec2.Vec2{center.X + aabb.Max.X, center.Y + aabb.Min.Y}
+
+		// Apply rotation around object center
+		ApplyRotToPointAroundCenter(&p1, center, obj_tr.Rot)
+		ApplyRotToPointAroundCenter(&p2, center, obj_tr.Rot)
+		ApplyRotToPointAroundCenter(&p3, center, obj_tr.Rot)
+		ApplyRotToPointAroundCenter(&p4, center, obj_tr.Rot)
+
+		// Convert world coordinates to screen coordinates
+		// Invert Y axis so it points up
+		p1.X = p1.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+		p1.Y = -p1.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+		p2.X = p2.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+		p2.Y = -p2.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+		p3.X = p3.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+		p3.Y = -p3.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+		p4.X = p4.X*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+		p4.Y = -p4.Y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+
+		vector.StrokeLine(screen_camera, float32(p1.X), float32(p1.Y), float32(p3.X), float32(p3.Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(p2.X), float32(p2.Y), float32(p4.X), float32(p4.Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(p2.X), float32(p2.Y), float32(p3.X), float32(p3.Y), 2, color.White, false)
+		vector.StrokeLine(screen_camera, float32(p4.X), float32(p4.Y), float32(p1.X), float32(p1.Y), 2, color.White, false)
+	}
+	query3 := donburi.NewQuery(filter.Contains(components.CircleCollider))
+	for entry := range query3.Iter(e.World) {
+		crcl := components.CircleCollider.Get(entry)
+		obj_tr := components.Transform.Get(entry)
+
+		// Calculate world position relative to camera
+		world_x := obj_tr.Pos.X - camera_tr.Pos.X
+		world_y := obj_tr.Pos.Y - camera_tr.Pos.Y
+
+		// Convert world coordinates to screen coordinates
+		// Invert Y axis so it points up (consistent with sprites and AABB)
+		screen_x := world_x*camera_comp.Zoom.X + camera_comp.ViewportSizeX/2
+		screen_y := -world_y*camera_comp.Zoom.Y + camera_comp.ViewportSizeY/2
+
+		// Scale the radius by the camera zoom (use average of X and Y zoom for consistency)
+		radius_scale := (camera_comp.Zoom.X + camera_comp.Zoom.Y) / 2
+		scaled_radius := crcl.Radius * radius_scale
+
+		vector.StrokeCircle(screen_camera, float32(screen_x), float32(screen_y), float32(scaled_radius), 2, color.White, false)
+	}
+}
+func ApplyRotToPoint(p1 *Vec2.Vec2, rot float64) {
+	oldX := p1.X
+	p1.X = p1.X*math.Cos(rot) - p1.Y*math.Sin(rot)
+	p1.Y = oldX*math.Sin(rot) + p1.Y*math.Cos(rot)
+}
+
+func ApplyRotToPointAroundCenter(p1 *Vec2.Vec2, center Vec2.Vec2, rot float64) {
+	// Translate point relative to center
+	relativeX := p1.X - center.X
+	relativeY := p1.Y - center.Y
+
+	// Apply rotation
+	oldX := relativeX
+	relativeX = relativeX*math.Cos(rot) - relativeY*math.Sin(rot)
+	relativeY = oldX*math.Sin(rot) + relativeY*math.Cos(rot)
+
+	// Translate back
+	p1.X = center.X + relativeX
+	p1.Y = center.Y + relativeY
 }
