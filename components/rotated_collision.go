@@ -31,7 +31,7 @@ func RotatedAABBvsAABB(a1, a2 *donburi.Entry) (bool, Vec2.Vec2, float64) {
 	corners2 := getRotatedAABBCorners(tr2, AABB2)
 
 	// Use Separating Axis Theorem (SAT) for rotated AABB collision
-	return SatCollision(corners1, corners2)
+	return satCollision(corners1, corners2)
 }
 
 // getRotatedAABBCorners returns the 4 corners of a rotated AABB in world space
@@ -62,8 +62,8 @@ func getRotatedAABBCorners(tr *TransformData, aabb *AABB_Data) []Vec2.Vec2 {
 	return worldCorners
 }
 
-// SatCollision performs Separating Axis Theorem collision detection
-func SatCollision(corners1, corners2 []Vec2.Vec2) (bool, Vec2.Vec2, float64) {
+// satCollision performs Separating Axis Theorem collision detection
+func satCollision(corners1, corners2 []Vec2.Vec2) (bool, Vec2.Vec2, float64) {
 	// Get axes to test (normals of edges)
 	axes := getAxes(corners1, corners2)
 

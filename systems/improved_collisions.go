@@ -18,7 +18,7 @@ func UpdateImprovedCollisions(e *ecs.ECS) {
 	resolver_comp := components.CollisionResolverComponent.Get(resolver_entry)
 
 	// Update the physics objects list dynamically
-	query := donburi.NewQuery(filter.Or(filter.Contains(components.CircleCollider), filter.Contains(components.AABB_Component), filter.Contains(components.PolygonCollider)))
+	query := donburi.NewQuery(filter.Or(filter.Contains(components.CircleCollider), filter.Contains(components.AABB_Component)))
 	resolver_comp.Physobs = nil
 	for phys_entry := range query.Iter(e.World) {
 		resolver_comp.Physobs = append(resolver_comp.Physobs, phys_entry)
@@ -120,121 +120,6 @@ func ResolveImprovedCollisions(e1, e2 *donburi.Entry) {
 			var j float64 = ResolveWithImprovedAngularImpulse(box, circle, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
 			ImprovedPositionalCorrection(box, circle, normal, penetration, 0.2)
 			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
-		}
-	}
-
-	// Polygon vs Polygon
-	if e1.HasComponent(components.PolygonCollider) && e2.HasComponent(components.PolygonCollider) {
-		colliding, normal, penetration := components.PolygonvsPolygon(e1, e2)
-		if colliding {
-			mat1 := components.MaterialComponent.Get(e1)
-			mat2 := components.MaterialComponent.Get(e2)
-
-			// Calculate collision point (center of overlap)
-			tr1 := components.Transform.Get(e1)
-			tr2 := components.Transform.Get(e2)
-			collisionPoint := Vec2.Vec2{
-				X: (tr1.Pos.X + tr2.Pos.X) / 2,
-				Y: (tr1.Pos.Y + tr2.Pos.Y) / 2,
-			}
-
-			var j float64 = ResolveWithImprovedAngularImpulse(e1, e2, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			ImprovedPositionalCorrection(e1, e2, normal, penetration, 0.2)
-			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
-		}
-	}
-
-	// Polygon vs Circle
-	if (e1.HasComponent(components.PolygonCollider) && e2.HasComponent(components.CircleCollider)) ||
-		(e2.HasComponent(components.PolygonCollider) && e1.HasComponent(components.CircleCollider)) {
-		var poly *donburi.Entry
-		var circle *donburi.Entry
-		if e1.HasComponent(components.CircleCollider) {
-			circle = e1
-			poly = e2
-		} else {
-			circle = e2
-			poly = e1
-		}
-
-		colliding, normal, penetration := components.PolygonvsCircle(poly, circle)
-		if colliding {
-			mat1 := components.MaterialComponent.Get(e1)
-			mat2 := components.MaterialComponent.Get(e2)
-
-			// Calculate collision point
-			polyTr := components.Transform.Get(poly)
-			circleTr := components.Transform.Get(circle)
-			collisionPoint := Vec2.Vec2{
-				X: (polyTr.Pos.X + circleTr.Pos.X) / 2,
-				Y: (polyTr.Pos.Y + circleTr.Pos.Y) / 2,
-			}
-
-			var j float64 = ResolveWithImprovedAngularImpulse(poly, circle, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-			ImprovedPositionalCorrection(poly, circle, normal, penetration, 0.2)
-			ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
-		}
-	}
-
-	// Polygon vs AABB (treat AABB as a polygon)
-	if (e1.HasComponent(components.PolygonCollider) && e2.HasComponent(components.AABB_Component)) ||
-		(e2.HasComponent(components.PolygonCollider) && e1.HasComponent(components.AABB_Component)) {
-		var poly *donburi.Entry
-		var box *donburi.Entry
-		if e1.HasComponent(components.AABB_Component) {
-			box = e1
-			poly = e2
-		} else {
-			box = e2
-			poly = e1
-		}
-
-		// Convert AABB to polygon vertices for collision detection
-		boxTr := components.Transform.Get(box)
-		boxComp := components.AABB_Component.Get(box)
-		polyTr := components.Transform.Get(poly)
-		polyComp := components.PolygonCollider.Get(poly)
-
-		if boxTr != nil && boxComp != nil && polyTr != nil && polyComp != nil {
-			// Create AABB vertices
-			halfWidth := (boxComp.Max.X - boxComp.Min.X) / 2
-			halfHeight := (boxComp.Max.Y - boxComp.Min.Y) / 2
-			aabbVertices := []Vec2.Vec2{
-				{X: -halfWidth, Y: -halfHeight},
-				{X: halfWidth, Y: -halfHeight},
-				{X: halfWidth, Y: halfHeight},
-				{X: -halfWidth, Y: halfHeight},
-			}
-
-			// Transform AABB vertices to world space
-			worldAABBVertices := make([]Vec2.Vec2, 4)
-			for i, vertex := range aabbVertices {
-				rotated := components.RotatePoint(vertex, boxTr.Rot)
-				worldAABBVertices[i] = Vec2.Vec2{
-					X: boxTr.Pos.X + rotated.X,
-					Y: boxTr.Pos.Y + rotated.Y,
-				}
-			}
-
-			// Get polygon vertices in world space
-			polyVertices := components.GetWorldVertices(poly)
-			if polyVertices != nil {
-				colliding, normal, penetration := components.SatCollision(polyVertices, worldAABBVertices)
-				if colliding {
-					mat1 := components.MaterialComponent.Get(e1)
-					mat2 := components.MaterialComponent.Get(e2)
-
-					// Calculate collision point
-					collisionPoint := Vec2.Vec2{
-						X: (polyTr.Pos.X + boxTr.Pos.X) / 2,
-						Y: (polyTr.Pos.Y + boxTr.Pos.Y) / 2,
-					}
-
-					var j float64 = ResolveWithImprovedAngularImpulse(poly, box, normal, collisionPoint, mat1.Restitution, mat2.Restitution)
-					ImprovedPositionalCorrection(poly, box, normal, penetration, 0.2)
-					ResolveImprovedFriction(e1, e2, normal, collisionPoint, j)
-				}
-			}
 		}
 	}
 }
