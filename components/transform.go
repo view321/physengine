@@ -80,6 +80,14 @@ func SetPos(entry *donburi.Entry, new_pos Vec2.Vec2) {
 	old_transform.Pos = new_pos
 }
 
+func ChangePos(e *donburi.Entry, pos_diff Vec2.Vec2){
+	tr := Transform.Get(e)
+	for _, child := range tr.Children{
+		child.Pos.AddUpdate(pos_diff)
+	}
+	tr.Pos.AddUpdate(pos_diff)
+}
+
 func SetRot(entry *donburi.Entry, new_rot float64) {
 	old_transform := Transform.Get(entry)
 	rotation_delta := new_rot - old_transform.Rot
@@ -102,4 +110,47 @@ func SetRot(entry *donburi.Entry, new_rot float64) {
 	}
 
 	old_transform.Rot = new_rot
+}
+
+func Rotate(entry *donburi.Entry, rot float64){
+	old_transform := Transform.Get(entry)
+	rotation_delta := rot
+
+	for _, child := range old_transform.Children {
+		// Calculate child position relative to parent
+		relative_x := child.Pos.X - old_transform.Pos.X
+		relative_y := child.Pos.Y - old_transform.Pos.Y
+
+		// Rotate the relative position around parent's origin
+		rotated_x := relative_x*math.Cos(rotation_delta) - relative_y*math.Sin(rotation_delta)
+		rotated_y := relative_x*math.Sin(rotation_delta) + relative_y*math.Cos(rotation_delta)
+
+		// Set child position to parent position + rotated relative position
+		child.Pos.X = old_transform.Pos.X + rotated_x
+		child.Pos.Y = old_transform.Pos.Y + rotated_y
+
+		// Child rotation should inherit parent's rotation change
+		child.Rot += rotation_delta
+	}
+
+	old_transform.Rot = old_transform.Rot + rot
+}
+// RotatePoint rotates a point around the origin by the given angle
+func RotatePoint(point Vec2.Vec2, angle float64) Vec2.Vec2 {
+	cos := math.Cos(angle)
+	sin := math.Sin(angle)
+	return Vec2.Vec2{
+		X: point.X*cos - point.Y*sin,
+		Y: point.X*sin + point.Y*cos,
+	}
+}
+
+// RotatePointAround rotates a point around a center point by the given angle
+func RotatePointAround(point Vec2.Vec2, center Vec2.Vec2, angle float64) Vec2.Vec2 {
+	// Translate to origin
+	translated := Vec2.Vec2{X: point.X - center.X, Y: point.Y - center.Y}
+	// Rotate
+	rotated := RotatePoint(translated, angle)
+	// Translate back
+	return Vec2.Vec2{X: rotated.X + center.X, Y: rotated.Y + center.Y}
 }
